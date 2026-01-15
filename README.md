@@ -22,7 +22,7 @@ Solutions for common cloud service platforms:
 
 ### Amazon Web Services (AWS)
 
-- ✨ **BETA** [Amazon ECS using CloudFormation](/beta/aws-ecsfargate-cfn)
+- [Amazon ECS + API Gateway using CloudFormation](/aws-ecs-apigateway-cfn)
 - [Amazon ECS using Terraform](/aws-ecsfargate-terraform)
 
 ### Google Cloud (GCP)
