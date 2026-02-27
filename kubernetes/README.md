@@ -1,10 +1,11 @@
 # Deploy 1Password SCIM Bridge on Kubernetes
 
-_Learn how to deploy 1Password SCIM Bridge on a Kubernetes cluster._
-
 > **Note**
 >
-> If you use Azure Kubernetes Service, learn how to [deploy the SCIM bridge there](https://support.1password.com/scim-deploy-azure/).
+> If you use Azure Kubernetes Service, learn how to [deploy the SCIM bridge there](https://support.1password.com/cs/scim-deploy-azure-kubernetes/).
+
+_Learn how to deploy 1Password SCIM Bridge on a Kubernetes cluster._
+
 
 ## Before you begin
 
@@ -47,7 +48,7 @@ After you [prepare your 1Password account](/PREPARATION.md#prepare-your-1passwor
 1. Follow the steps to [create a Google service account, key, and API client](https://support.1password.com/scim-google-workspace/#step-1-create-a-google-service-account-key-and-api-client).
 2. Save the credentials file to the `google-workspace` subfolder in this directory.
 3. Make sure the key file is named `workspace-credentials.json`.
-4. Edit the Workpsace settings file template located at [`./google-workspace/workspace-settings.json`](./google-workspace/workspace-settings.json) and fill in correct values for:
+4. Edit the Workspace settings file template located at [`./google-workspace/workspace-settings.json`](./google-workspace/workspace-settings.json) and fill in correct values for:
    - **Actor**: the email address of the administrator in Google Workspace that the service account is acting on behalf of.
    - **Bridge Address**: the URL you will use for your SCIM bridge (not your 1Password account sign-in address). This is most often a subdomain of your choosing on a domain you own. For example: `https://scim.example.com`.
 5. Return to the working directory for all following steps (`scim-examples/kubernetes`).
@@ -103,7 +104,7 @@ Use your SCIM bridge URL to test the connection and view status information. For
 ```sh
 curl --silent --show-error --request GET --header "Accept: application/json" \
   --header "Authorization: Bearer mF_9.B5f-4.1JqM" \
-  https:/scim.example.com/health
+  https://scim.example.com/health
 ```
 
 Replace `mF_9.B5f-4.1JqM` with your bearer token and `https://scim.example.com` with your SCIM bridge URL.
@@ -113,35 +114,35 @@ Replace `mF_9.B5f-4.1JqM` with your bearer token and `https://scim.example.com` 
 
 ```json
 {
-  "build": "209031",
-  "version": "2.9.3",
+  "build": "209131",
+  "version": "2.9.13",
   "reports": [
     {
       "source": "ConfirmationWatcher",
-      "time": "2024-04-25T14:06:09Z",
-      "expires": "2024-04-25T14:16:09Z",
+      "time": "2025-05-09T14:06:09Z",
+      "expires": "2025-05-09T14:16:09Z",
       "state": "healthy"
     },
     {
       "source": "RedisCache",
-      "time": "2024-04-25T14:06:09Z",
-      "expires": "2024-04-25T14:16:09Z",
+      "time": "2025-05-09T14:06:09Z",
+      "expires": "2025-05-09T14:16:09Z",
       "state": "healthy"
     },
     {
       "source": "SCIMServer",
-      "time": "2024-04-25T14:06:56Z",
-      "expires": "2024-04-25T14:16:56Z",
+      "time": "2025-05-09T14:06:56Z",
+      "expires": "2025-05-09T14:16:56Z",
       "state": "healthy"
     },
     {
       "source": "StartProvisionWatcher",
-      "time": "2024-04-25T14:06:09Z",
-      "expires": "2024-04-25T14:16:09Z",
+      "time": "2025-05-09T14:06:09Z",
+      "expires": "2025-05-09T14:16:09Z",
       "state": "healthy"
     }
   ],
-  "retrievedAt": "2024-04-25T14:06:56Z"
+  "retrievedAt": "2025-05-09T14:06:56Z"
 }
 ```
 
@@ -159,7 +160,7 @@ To finish setting up automated user provisioning, [connect your identity provide
 To update SCIM bridge, connect to your Kubernetes cluster and run the following command:
 
 ```sh
-kubectl set image deploy/op-scim-bridge op-scim-bridge=1password/scim:v2.9.5
+kubectl set image deploy/op-scim-bridge op-scim-bridge=1password/scim:v2.9.13
 ```
 
 > **Note**
@@ -177,12 +178,13 @@ If you regenenerate credentials for your SCIM bridge:
 1. Download the new `scimsession` file from your 1Password account.
 2. Delete the `scimsession` Secret on your cluster and recreate it from the new file:
 
-    ```sh
-    kubectl delete secret scimsession
-    kubectl create secret generic scimsession --from-file=scimsession=./scimsession
-    ```
+   ```sh
+   kubectl delete secret scimsession
+   kubectl create secret generic scimsession --from-file=scimsession=./scimsession
+   ```
 
    Kubernetes automatically updates the credentials file mounted in the Pod with the new Secret value.
+
 3. [Test your SCIM bridge](#step-5-test-your-scim-bridge) using the new bearer token associated with the regenerated `scimsession` file.
 4. Update your identity provider configuration with your new bearer token.
 
@@ -274,6 +276,75 @@ In this configuration, 1Password SCIM Bridge will listen for unencrypted traffic
 
 Alternatively, you can create a TLS Secret containing your key and certificate files, which can then be used by your SCIM bridge. This will also disable Let's Encrypt functionality.
 
+Save the public certificate along with any provided intermediate certificates from your certificate authority to the file `certificate.pem`, and the private key in `key.pem`.
+
+The provided intermediate(s) from your certificate authority must be _after_ the leaf cert that applies to your SCIM bridge deployment URL.
+
+
+> [!IMPORTANT]
+> Without the intermediate(s) included, some identity providers (ex. [Okta](https://support.okta.com/help/s/article/receiving-pkix-path-building-failed-setting-up-a-hook-or-scim-server?language=en_US)) will be unable to validate your TLS certificate for your SCIM bridge. 
+
+<details>
+   <summary>An example certificate.pem file</summary>
+   
+```
+-----BEGIN CERTIFICATE----- # The certificate for example.com
+MIIFmzCCBSGgAwIBAgIQCtiTuvposLf7ekBPBuyvmjAKBggqhkjOPQQDAzBZMQsw
+CQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMTMwMQYDVQQDEypEaWdp
+Q2VydCBHbG9iYWwgRzMgVExTIEVDQyBTSEEzODQgMjAyMCBDQTEwHhcNMjUwMTE1
+MDAwMDAwWhcNMjYwMTE1MjM1OTU5WjCBjjELMAkGA1UEBhMCVVMxEzARBgNVBAgT
+CkNhbGlmb3JuaWExFDASBgNVBAcTC0xvcyBBbmdlbGVzMTwwOgYDVQQKEzNJbnRl
+cm5ldCBDb3Jwb3JhdGlvbiBmb3IgQXNzaWduZWQgTmFtZXMgYW5kIE51bWJlcnMx
+FjAUBgNVBAMMDSouZXhhbXBsZS5jb20wWTATBgcqhkjOPQIBBggqhkjOPQMBBwNC
+AASaSJeELWFsCMlqFKDIOIDmAMCH+plXDhsA4tiHklfnCPs8XrDThCg3wSQRjtMg
+cXS9k49OCQPOAjuw5GZzz6/uo4IDkzCCA48wHwYDVR0jBBgwFoAUiiPrnmvX+Tdd
++W0hOXaaoWfeEKgwHQYDVR0OBBYEFPDBajIN7NrH6o/NDW0ZElnRvnLtMCUGA1Ud
+EQQeMByCDSouZXhhbXBsZS5jb22CC2V4YW1wbGUuY29tMD4GA1UdIAQ3MDUwMwYG
+Z4EMAQICMCkwJwYIKwYBBQUHAgEWG2h0dHA6Ly93d3cuZGlnaWNlcnQuY29tL0NQ
+UzAOBgNVHQ8BAf8EBAMCA4gwHQYDVR0lBBYwFAYIKwYBBQUHAwEGCCsGAQUFBwMC
+MIGfBgNVHR8EgZcwgZQwSKBGoESGQmh0dHA6Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9E
+aWdpQ2VydEdsb2JhbEczVExTRUNDU0hBMzg0MjAyMENBMS0yLmNybDBIoEagRIZC
+aHR0cDovL2NybDQuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0R2xvYmFsRzNUTFNFQ0NT
+SEEzODQyMDIwQ0ExLTIuY3JsMIGHBggrBgEFBQcBAQR7MHkwJAYIKwYBBQUHMAGG
+GGh0dHA6Ly9vY3NwLmRpZ2ljZXJ0LmNvbTBRBggrBgEFBQcwAoZFaHR0cDovL2Nh
+Y2VydHMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0R2xvYmFsRzNUTFNFQ0NTSEEzODQy
+MDIwQ0ExLTIuY3J0MAwGA1UdEwEB/wQCMAAwggF7BgorBgEEAdZ5AgQCBIIBawSC
+AWcBZQB0AA5XlLzzrqk+MxssmQez95Dfm8I9cTIl3SGpJaxhxU4hAAABlGd6v8cA
+AAQDAEUwQwIfJBcPWkx80ik7uLYW6OGvNYvJ4NmOR2RXc9uviFPH6QIgUtuuUenH
+IT5UNWJffBBRq31tUGi7ZDTSrrM0f4z1Va4AdQBkEcRspBLsp4kcogIuALyrTygH
+1B41J6vq/tUDyX3N8AAAAZRnesAFAAAEAwBGMEQCIHCu6NgHhV1Qvif/G7BHq7ci
+MGH8jdch/xy4LzrYlesXAiByMFMvDhGg4sYm1MsrDGVedcwpE4eN0RuZcFGmWxwJ
+cgB2AEmcm2neHXzs/DbezYdkprhbrwqHgBnRVVL76esp3fjDAAABlGd6wBkAAAQD
+AEcwRQIgaFh67yEQ2lwgm3X16n2iWjEQFII2b2fpONtBVibZVWwCIQD5psqjXDYs
+IEb1hyh0S8bBN3O4u2sA9zisKIlYjZg8wjAKBggqhkjOPQQDAwNoADBlAjEA+aaC
+RlPbb+VY+u4avPyaG7fvUDJqN8KwlrXD4XptT7QL+D03+BA/FUEo3dD1iz37AjBk
+Y3jhsuLAW7pWsDbtX/Qwxp6kNsK4jh1/RjvV/260sxQwM/GM7t0+T0uP2L+Y12U=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE----- # The intermediate certificate for example.com provided by your CA
+MIIDeTCCAv+gAwIBAgIQCwDpLU1tcx/KMFnHyx4YhjAKBggqhkjOPQQDAzBhMQsw
+CQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3d3cu
+ZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBHMzAe
+Fw0yMTA0MTQwMDAwMDBaFw0zMTA0MTMyMzU5NTlaMFkxCzAJBgNVBAYTAlVTMRUw
+EwYDVQQKEwxEaWdpQ2VydCBJbmMxMzAxBgNVBAMTKkRpZ2lDZXJ0IEdsb2JhbCBH
+MyBUTFMgRUNDIFNIQTM4NCAyMDIwIENBMTB2MBAGByqGSM49AgEGBSuBBAAiA2IA
+BHipnHWuiF1jpK1dhtgQSdavklljQyOF9EhlMM1KNJWmDj7ZfAjXVwUoSJ4Lq+vC
+05ae7UXSi4rOAUsXQ+Fzz21zSDTcAEYJtVZUyV96xxMH0GwYF2zK28cLJlYujQf1
+Z6OCAYIwggF+MBIGA1UdEwEB/wQIMAYBAf8CAQAwHQYDVR0OBBYEFIoj655r1/k3
+XfltITl2mqFn3hCoMB8GA1UdIwQYMBaAFLPbSKT5ocXYrjZBzBFjaWIpvEvGMA4G
+A1UdDwEB/wQEAwIBhjAdBgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwdgYI
+KwYBBQUHAQEEajBoMCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5kaWdpY2VydC5j
+b20wQAYIKwYBBQUHMAKGNGh0dHA6Ly9jYWNlcnRzLmRpZ2ljZXJ0LmNvbS9EaWdp
+Q2VydEdsb2JhbFJvb3RHMy5jcnQwQgYDVR0fBDswOTA3oDWgM4YxaHR0cDovL2Ny
+bDMuZGlnaWNlcnQuY29tL0RpZ2lDZXJ0R2xvYmFsUm9vdEczLmNybDA9BgNVHSAE
+NjA0MAsGCWCGSAGG/WwCATAHBgVngQwBATAIBgZngQwBAgEwCAYGZ4EMAQICMAgG
+BmeBDAECAzAKBggqhkjOPQQDAwNoADBlAjB+Jlhu7ojsDN0VQe56uJmZcNFiZU+g
+IJ5HsVvBsmcxHcxyeq8ickBCbmWE/odLDxkCMQDmv9auNIdbP2fHHahv1RJ4teaH
+MUSpXca4eMzP79QyWBH/OoUGPB2Eb9P1+dozHKQ=
+-----END CERTIFICATE-----
+```
+</details>
+
+
 Assuming these files exist in the working directory, create the Secret and set the `OP_TLS_CERT_FILE` and `OP_TLS_KEY_FILE` variables to redeploy SCIM bridge using your certificate:
 
 ```sh
@@ -295,7 +366,7 @@ kubectl set env deploy op-scim-bridge \
 
 If you prefer to use an external Redis cache, omit the the `redis-*.yaml` files when deploying to your Kubernetes cluster. Replace the value of the `OP_REDIS_URL` environment variable in [`op-scim-config.yaml`](./op-scim-config.yaml) with a Redis connection URI for your Redis server.
 
-#### If you already deployd your SCIM bridge
+#### If you already deployed your SCIM bridge
 
 You can set `OP_REDIS_URL` directly to reboot SCIM bridge and connect to the specified Redis server:
 
@@ -333,7 +404,7 @@ These values can be set in [`op-scim-config.yaml`](./op-scim-config.yaml)
 - `OP_REDIS_ENABLE_SSL`: Optionally enforce SSL on redis server connections (default: `false`) (Boolean `0` or `1`).
 - `OP_REDIS_INSECURE_SSL`: Set whether to allow insecure SSL on redis server connections when `OP_REDIS_ENABLE_SSL` is set to `true`. This may be useful for testing or self-signed environments (default: `false`) (Boolean `0` or `1`).
 
-#### If you already deployd your SCIM bridge
+#### If you already deployed your SCIM bridge
 
 You can unset `OP_REDIS_URL` and set any of the above environment variables directly to reboot SCIM bridge and connect to the specified Redis server:
 

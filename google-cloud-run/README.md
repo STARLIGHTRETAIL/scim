@@ -83,7 +83,7 @@ Stream the [`op-scim-bridge.yaml`](./op-scim-bridge.yaml) Cloud Run service YAML
 
 ```sh
 curl --silent --show-error \
-  https://raw.githubusercontent.com/1Password/scim-examples/main/beta/google-cloud-run/op-scim-bridge.yaml |
+  https://raw.githubusercontent.com/1Password/scim-examples/main/google-cloud-run/op-scim-bridge.yaml |
   gcloud run services replace - &&
   gcloud run services add-iam-policy-binding op-scim-bridge --member=allUsers --role=roles/run.invoker &&
   gcloud run services describe op-scim-bridge --format="value(status.url)"
@@ -108,35 +108,35 @@ Replace `mF_9.B5f-4.1JqM` with your bearer token and `https://op-scim-bridge-exa
 
 ```json
 {
-  "build": "209031",
-  "version": "2.9.3",
+  "build": "209131",
+  "version": "2.9.13",
   "reports": [
     {
       "source": "ConfirmationWatcher",
-      "time": "2024-04-25T14:06:09Z",
-      "expires": "2024-04-25T14:16:09Z",
+      "time": "2025-05-09T14:06:09Z",
+      "expires": "2025-05-09T14:16:09Z",
       "state": "healthy"
     },
     {
       "source": "RedisCache",
-      "time": "2024-04-25T14:06:09Z",
-      "expires": "2024-04-25T14:16:09Z",
+      "time": "2025-05-09T14:06:09Z",
+      "expires": "2025-05-09T14:16:09Z",
       "state": "healthy"
     },
     {
       "source": "SCIMServer",
-      "time": "2024-04-25T14:06:56Z",
-      "expires": "2024-04-25T14:16:56Z",
+      "time": "2025-05-09T14:06:56Z",
+      "expires": "2025-05-09T14:16:56Z",
       "state": "healthy"
     },
     {
       "source": "StartProvisionWatcher",
-      "time": "2024-04-25T14:06:09Z",
-      "expires": "2024-04-25T14:16:09Z",
+      "time": "2025-05-09T14:06:09Z",
+      "expires": "2025-05-09T14:16:09Z",
       "state": "healthy"
     }
   ],
-  "retrievedAt": "2024-04-25T14:06:56Z"
+  "retrievedAt": "2025-05-09T14:06:56Z"
 }
 ```
 
@@ -163,7 +163,7 @@ To finish setting up automated user provisioning, [connect your identity provide
 
     ```sh
     curl --silent --show-error \
-      https://raw.githubusercontent.com/1Password/scim-examples/main/beta/google-cloud-run/op-scim-bridge.yaml |
+      https://raw.githubusercontent.com/1Password/scim-examples/main/google-cloud-run/op-scim-bridge.yaml |
       gcloud run services replace -
     ```
 

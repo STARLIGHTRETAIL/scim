@@ -97,13 +97,27 @@
             },
             "properties": {
                 "appLogsConfiguration": {
-                    "destination": "log-analytics",
-                    "logAnalyticsConfiguration": {
-                        "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))).customerId]",
-                        "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName')), '2022-10-01').primarySharedKey]"
-                    }
+                    "destination": "azure-monitor"
                 },
                 "zoneRedundant": false
+            }
+        },
+        {
+            "type": "Microsoft.App/managedEnvironments/providers/diagnosticSettings",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[concat(parameters('containerAppEnvName'), '/Microsoft.Insights/ContainerAppLogs')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', parameters('containerAppEnvName'))]",
+                "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]"
+            ],
+            "properties": {
+                "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', parameters('logAnalyticsWorkspaceName'))]",
+                "logs": [
+                    {
+                        "categoryGroup": "allLogs",
+                        "enabled": true
+                    }
+                ]
             }
         },
         {
@@ -142,7 +156,7 @@
                 "template": {
                     "containers": [
                         {
-                            "image": "docker.io/1password/scim:v2.9.5",
+                            "image": "docker.io/1password/scim:v2.9.13",
                             "name": "op-scim-bridge",
                             "resources": {
                                 "cpu": "[variables('resourceSettings')[parameters('provisioningVolume')].cpu]",
@@ -174,7 +188,11 @@
                             "name": "credentials",
                             "storageType": "Secret"
                         }
-                    ]
+                    ],
+                    "scale": {
+                        "minReplicas": 1,
+                        "maxReplicas": 1
+                    }
                 }
             }
         },
